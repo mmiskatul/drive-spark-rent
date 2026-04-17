@@ -6,6 +6,9 @@ import { AppProviders } from "./providers";
 export const metadata: Metadata = {
   title: "DriveNow | Premium car rental marketplace",
   description: "Browse, book, and manage premium rental cars from verified partners.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
