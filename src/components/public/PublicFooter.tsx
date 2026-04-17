@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { Twitter, Instagram, Linkedin, Github } from "lucide-react";
 
@@ -32,7 +32,7 @@ export function PublicFooter() {
               <ul className="space-y-3">
                 {col.links.map(([label, to]) => (
                   <li key={label}>
-                    <Link to={to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
+                    <Link href={to} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{label}</Link>
                   </li>
                 ))}
               </ul>

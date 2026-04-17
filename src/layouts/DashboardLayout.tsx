@@ -1,5 +1,8 @@
+"use client";
+
 import { ReactNode, useState } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, CalendarDays, Bell, User, Car, BarChart3,
   ShieldCheck, Users, Settings, Search, ChevronDown, LogOut, Menu, X, Plus,
@@ -50,6 +53,7 @@ const roleMeta: Record<Role, { label: string; name: string; subtitle: string; in
 function SidebarBody({ role, onNavigate }: { role: Role; onNavigate?: () => void }) {
   const items = navByRole[role];
   const meta = roleMeta[role];
+  const pathname = usePathname() ?? "";
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center px-6 border-b border-sidebar-border">
@@ -60,21 +64,20 @@ function SidebarBody({ role, onNavigate }: { role: Role; onNavigate?: () => void
       </div>
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {items.map((item) => (
-          <NavLink
+          <Link
             key={item.to}
-            to={item.to}
-            end={item.to === `/${role}`}
+            href={item.to}
             onClick={onNavigate}
-            className={({ isActive }) => cn(
+            className={cn(
               "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-              isActive
+              (item.to === `/${role}` ? pathname === item.to : pathname.startsWith(item.to))
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-sidebar-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
             )}
           >
             <item.icon className="h-4 w-4" />
             {item.label}
-          </NavLink>
+          </Link>
         ))}
       </nav>
 
@@ -96,9 +99,9 @@ function SidebarBody({ role, onNavigate }: { role: Role; onNavigate?: () => void
 export default function DashboardLayout({ role, children }: { role: Role; children?: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const meta = roleMeta[role];
-  const location = useLocation();
+  const pathname = usePathname() ?? "";
   const items = navByRole[role];
-  const current = items.find((i) => location.pathname === i.to) ?? items.find((i) => location.pathname.startsWith(i.to)) ?? items[0];
+  const current = items.find((i) => pathname === i.to) ?? items.find((i) => pathname.startsWith(i.to)) ?? items[0];
 
   return (
     <div className="min-h-screen bg-secondary/30 flex">
@@ -158,10 +161,10 @@ export default function DashboardLayout({ role, children }: { role: Role; childr
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>{meta.name}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild><Link to={`/${role}/profile`}>Profile</Link></DropdownMenuItem>
-                  <DropdownMenuItem asChild><Link to="/">Switch role</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href={`/${role}/profile`}>Profile</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/">Switch role</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild><Link to="/login" className="text-destructive"><LogOut className="h-4 w-4 mr-2" />Sign out</Link></DropdownMenuItem>
+                  <DropdownMenuItem asChild><Link href="/login" className="text-destructive"><LogOut className="h-4 w-4 mr-2" />Sign out</Link></DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -169,7 +172,7 @@ export default function DashboardLayout({ role, children }: { role: Role; childr
         </header>
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          {children ?? <Outlet />}
+          {children}
         </main>
       </div>
     </div>

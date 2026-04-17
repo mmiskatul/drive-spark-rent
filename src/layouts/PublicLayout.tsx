@@ -1,13 +1,13 @@
-import { Outlet } from "react-router-dom";
+import type { ReactNode } from "react";
 import { PublicNavbar } from "@/components/public/PublicNavbar";
 import { PublicFooter } from "@/components/public/PublicFooter";
 
-export default function PublicLayout() {
+export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PublicNavbar />
       <main className="flex-1">
-        <Outlet />
+        {children}
       </main>
       <PublicFooter />
     </div>

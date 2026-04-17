@@ -1,6 +1,9 @@
+"use client";
+
 import { useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
@@ -14,8 +17,7 @@ const links = [
 
 export function PublicNavbar() {
   const [open, setOpen] = useState(false);
-  const { pathname } = useLocation();
-  const transparent = pathname === "/";
+  const pathname = usePathname() ?? "";
 
   return (
     <header className={cn(
@@ -27,26 +29,26 @@ export function PublicNavbar() {
           <Logo />
           <nav className="hidden lg:flex items-center gap-1">
             {links.map((l) => (
-              <NavLink
+              <Link
                 key={l.to}
-                to={l.to}
-                className={({ isActive }) => cn(
+                href={l.to}
+                className={cn(
                   "px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-                  isActive ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
+                  pathname === l.to ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/60",
                 )}
               >
                 {l.label}
-              </NavLink>
+              </Link>
             ))}
           </nav>
         </div>
 
         <div className="hidden md:flex items-center gap-2">
           <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-            <Link to="/login">Sign in</Link>
+            <Link href="/login">Sign in</Link>
           </Button>
           <Button asChild size="sm" className="rounded-full px-5 shadow-soft">
-            <Link to="/register">Get started</Link>
+            <Link href="/register">Get started</Link>
           </Button>
         </div>
 
@@ -63,21 +65,21 @@ export function PublicNavbar() {
         <div className="lg:hidden border-t border-border/60 bg-background animate-fade-in">
           <div className="container py-4 space-y-1">
             {links.map((l) => (
-              <NavLink
+              <Link
                 key={l.to}
-                to={l.to}
+                href={l.to}
                 onClick={() => setOpen(false)}
-                className={({ isActive }) => cn(
+                className={cn(
                   "block px-3 py-2.5 text-sm font-medium rounded-lg",
-                  isActive ? "bg-secondary text-foreground" : "text-muted-foreground",
+                  pathname === l.to ? "bg-secondary text-foreground" : "text-muted-foreground",
                 )}
               >
                 {l.label}
-              </NavLink>
+              </Link>
             ))}
             <div className="pt-3 grid grid-cols-2 gap-2">
-              <Button asChild variant="outline" size="sm"><Link to="/login">Sign in</Link></Button>
-              <Button asChild size="sm"><Link to="/register">Get started</Link></Button>
+              <Button asChild variant="outline" size="sm"><Link href="/login">Sign in</Link></Button>
+              <Button asChild size="sm"><Link href="/register">Get started</Link></Button>
             </div>
           </div>
         </div>

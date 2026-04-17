@@ -5,6 +5,15 @@ import hatchBlue from "@/assets/car-hatch-blue.jpg";
 import evSilver from "@/assets/car-ev-silver.jpg";
 import truckWhite from "@/assets/car-truck-white.jpg";
 
+const carImages = {
+  suvWhite: suvWhite.src,
+  sedanBlack: sedanBlack.src,
+  coupeRed: coupeRed.src,
+  hatchBlue: hatchBlue.src,
+  evSilver: evSilver.src,
+  truckWhite: truckWhite.src,
+};
+
 export type CarCategory = "SUV" | "Sedan" | "Coupe" | "Hatchback" | "Electric" | "Pickup";
 export type FuelType = "Petrol" | "Diesel" | "Electric" | "Hybrid";
 export type Transmission = "Automatic" | "Manual";
@@ -42,8 +51,8 @@ export const cars: Car[] = [
     model: "GLE 450",
     year: 2024,
     category: "SUV",
-    image: suvWhite,
-    gallery: [suvWhite, sedanBlack, evSilver],
+    image: carImages.suvWhite,
+    gallery: [carImages.suvWhite, carImages.sedanBlack, carImages.evSilver],
     location: "Dubai Marina, UAE",
     pricePerDay: 240,
     seats: 5,
@@ -66,8 +75,8 @@ export const cars: Car[] = [
     model: "530i",
     year: 2024,
     category: "Sedan",
-    image: sedanBlack,
-    gallery: [sedanBlack, suvWhite],
+    image: carImages.sedanBlack,
+    gallery: [carImages.sedanBlack, carImages.suvWhite],
     location: "Downtown, Dubai",
     pricePerDay: 180,
     seats: 5,
@@ -90,8 +99,8 @@ export const cars: Car[] = [
     model: "911",
     year: 2023,
     category: "Coupe",
-    image: coupeRed,
-    gallery: [coupeRed],
+    image: carImages.coupeRed,
+    gallery: [carImages.coupeRed],
     location: "Palm Jumeirah, Dubai",
     pricePerDay: 520,
     seats: 2,
@@ -114,8 +123,8 @@ export const cars: Car[] = [
     model: "Cooper S",
     year: 2023,
     category: "Hatchback",
-    image: hatchBlue,
-    gallery: [hatchBlue],
+    image: carImages.hatchBlue,
+    gallery: [carImages.hatchBlue],
     location: "JBR, Dubai",
     pricePerDay: 95,
     seats: 4,
@@ -138,8 +147,8 @@ export const cars: Car[] = [
     model: "Model Y",
     year: 2024,
     category: "Electric",
-    image: evSilver,
-    gallery: [evSilver, suvWhite],
+    image: carImages.evSilver,
+    gallery: [carImages.evSilver, carImages.suvWhite],
     location: "Business Bay, Dubai",
     pricePerDay: 160,
     seats: 5,
@@ -162,8 +171,8 @@ export const cars: Car[] = [
     model: "F-150",
     year: 2023,
     category: "Pickup",
-    image: truckWhite,
-    gallery: [truckWhite],
+    image: carImages.truckWhite,
+    gallery: [carImages.truckWhite],
     location: "Sharjah, UAE",
     pricePerDay: 140,
     seats: 5,
@@ -257,10 +266,10 @@ export const bookings: Booking[] = [
 ];
 
 export const locations = [
-  { name: "Dubai", count: 1240, image: suvWhite },
-  { name: "Abu Dhabi", count: 612, image: sedanBlack },
-  { name: "Sharjah", count: 318, image: truckWhite },
-  { name: "Ras Al Khaimah", count: 142, image: evSilver },
+  { name: "Dubai", count: 1240, image: carImages.suvWhite },
+  { name: "Abu Dhabi", count: 612, image: carImages.sedanBlack },
+  { name: "Sharjah", count: 318, image: carImages.truckWhite },
+  { name: "Ras Al Khaimah", count: 142, image: carImages.evSilver },
 ];
 
 export const partners = [

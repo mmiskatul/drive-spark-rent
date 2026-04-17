@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Star, Users, Fuel, Settings2, MapPin, Heart, BadgeCheck } from "lucide-react";
 import type { Car } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export function CarCard({ car, className }: { car: Car; className?: string }) {
             <span className="text-xs text-muted-foreground"> / day</span>
           </div>
           <Button asChild size="sm" className="rounded-full">
-            <Link to={`/cars/${car.id}`}>View</Link>
+            <Link href={`/cars/${car.id}`}>View</Link>
           </Button>
         </div>
       </div>

@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import { ShieldCheck, Sparkles, Users } from "lucide-react";
 
