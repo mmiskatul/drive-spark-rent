@@ -1,1 +1,0 @@
-"""Custom ASGI middleware."""
