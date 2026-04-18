@@ -1,31 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout, { PageHeader } from "@/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { apiCarToCar, type ApiCar, type CarsResponse } from "@/lib/api-cars";
+import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-
-type ApiCar = {
-  id: string;
-  title: string;
-  brand: string;
-  model: string;
-  year: number;
-  category: string;
-  location: string;
-  price_per_day: number;
-  seats: number;
-  transmission: string;
-  fuel: string;
-  status: "draft" | "active" | "unavailable";
-};
-
-type CarsResponse = {
-  items: ApiCar[];
-};
 
 function getErrorMessage(data: unknown) {
   if (data && typeof data === "object" && "detail" in data) {
@@ -134,9 +116,9 @@ export default function PartnerCars() {
           status: nextStatus,
         }),
       });
-      const data = await response.json().catch(() => null);
+      const data = (await response.json().catch(() => null)) as ApiCar | null;
 
-      if (!response.ok) {
+      if (!response.ok || !data) {
         throw new Error(getErrorMessage(data));
       }
 
@@ -158,10 +140,14 @@ export default function PartnerCars() {
       <PageHeader
         title="My cars"
         description="Manage your fleet and listings."
-        actions={<Button asChild className="rounded-full"><Link href="/partner/cars/new"><Plus className="h-4 w-4 mr-1" /> Add car</Link></Button>}
+        actions={
+          <Button asChild className="rounded-full">
+            <Link href="/partner/cars/new"><Plus className="h-4 w-4 mr-1" /> Add car</Link>
+          </Button>
+        }
       />
       <div className="mb-4 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search cars..."
           className="pl-9 rounded-full"
@@ -169,16 +155,16 @@ export default function PartnerCars() {
           onChange={(event) => setQuery(event.target.value)}
         />
       </div>
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-secondary/40 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="text-left p-4 font-medium">Car</th>
-                <th className="text-left p-4 font-medium">Category</th>
-                <th className="text-left p-4 font-medium">Location</th>
-                <th className="text-left p-4 font-medium">Price/day</th>
-                <th className="text-left p-4 font-medium">Status</th>
+                <th className="p-4 text-left font-medium">Car</th>
+                <th className="p-4 text-left font-medium">Category</th>
+                <th className="p-4 text-left font-medium">Location</th>
+                <th className="p-4 text-left font-medium">Price/day</th>
+                <th className="p-4 text-left font-medium">Status</th>
                 <th className="p-4"></th>
               </tr>
             </thead>
@@ -190,49 +176,71 @@ export default function PartnerCars() {
               )}
               {!isLoading && filteredCars.length === 0 && (
                 <tr>
-                  <td className="p-6 text-center text-muted-foreground" colSpan={6}>No cars found.</td>
+                  <td className="p-8 text-center" colSpan={6}>
+                    <div className="mx-auto max-w-sm">
+                      <p className="font-display text-lg font-semibold">No cars found</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Add your first car and it will appear here immediately after publishing.
+                      </p>
+                      <Button asChild className="mt-4 rounded-full">
+                        <Link href="/partner/cars/new"><Plus className="h-4 w-4 mr-1" /> Add car</Link>
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               )}
-              {filteredCars.map((car) => (
-                <tr key={car.id} className="hover:bg-secondary/30">
-                  <td className="p-4">
-                    <div>
-                      <p className="font-semibold">{car.title}</p>
-                      <p className="text-xs text-muted-foreground">{car.brand} {car.model} · {car.year}</p>
-                    </div>
-                  </td>
-                  <td className="p-4 text-muted-foreground">{car.category}</td>
-                  <td className="p-4 text-muted-foreground">{car.location}</td>
-                  <td className="p-4 font-semibold">${car.price_per_day}</td>
-                  <td className="p-4">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${car.status === "active" ? "bg-status-confirmed-bg text-status-confirmed" : "bg-status-rejected-bg text-status-rejected"}`}>
-                      {car.status === "active" ? "Active" : car.status === "draft" ? "Draft" : "Unavailable"}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex gap-1 justify-end">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8"
-                        disabled={busyCarId === car.id}
-                        onClick={() => handleQuickUpdate(car)}
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-8 w-8 text-destructive"
-                        disabled={busyCarId === car.id}
-                        onClick={() => handleDelete(car)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filteredCars.map((car) => {
+                const displayCar = apiCarToCar(car);
+
+                return (
+                  <tr key={car.id} className="hover:bg-secondary/30">
+                    <td className="p-4">
+                      <div className="flex min-w-72 items-center gap-3">
+                        <img
+                          src={displayCar.image}
+                          alt={car.title}
+                          className="h-16 w-24 rounded-xl object-cover"
+                          loading="lazy"
+                        />
+                        <div>
+                          <p className="font-semibold">{car.title}</p>
+                          <p className="text-xs text-muted-foreground">{car.brand} {car.model} · {car.year}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4 text-muted-foreground">{car.category}</td>
+                    <td className="p-4 text-muted-foreground">{car.location}</td>
+                    <td className="p-4 font-semibold">${car.price_per_day}</td>
+                    <td className="p-4">
+                      <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${car.status === "active" ? "bg-status-confirmed-bg text-status-confirmed" : "bg-status-rejected-bg text-status-rejected"}`}>
+                        {car.status === "active" ? "Active" : car.status === "draft" ? "Draft" : "Unavailable"}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          disabled={busyCarId === car.id}
+                          onClick={() => handleQuickUpdate(car)}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-destructive"
+                          disabled={busyCarId === car.id}
+                          onClick={() => handleDelete(car)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

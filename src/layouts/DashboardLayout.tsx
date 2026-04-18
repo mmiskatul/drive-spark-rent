@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -50,9 +50,37 @@ const roleMeta: Record<Role, { label: string; name: string; subtitle: string; in
   admin:    { label: "Admin", name: "Admin Console", subtitle: "Platform owner", initials: "AD" },
 };
 
-function SidebarBody({ role, onNavigate }: { role: Role; onNavigate?: () => void }) {
+type DashboardUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+};
+
+type SessionResponse = {
+  user?: DashboardUser;
+};
+
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+
+  if (parts.length === 0) {
+    return "U";
+  }
+
+  return parts.map((part) => part[0]).slice(0, 2).join("").toUpperCase();
+}
+
+function SidebarBody({
+  role,
+  userMeta,
+  onNavigate,
+}: {
+  role: Role;
+  userMeta: { label: string; name: string; subtitle: string; initials: string };
+  onNavigate?: () => void;
+}) {
   const items = navByRole[role];
-  const meta = roleMeta[role];
   const pathname = usePathname() ?? "";
   return (
     <div className="flex h-full flex-col">
@@ -60,7 +88,7 @@ function SidebarBody({ role, onNavigate }: { role: Role; onNavigate?: () => void
         <Logo />
       </div>
       <div className="px-4 pt-4 pb-2">
-        <p className="px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{meta.label}</p>
+        <p className="px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{userMeta.label}</p>
       </div>
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {items.map((item) => (
@@ -84,11 +112,11 @@ function SidebarBody({ role, onNavigate }: { role: Role; onNavigate?: () => void
       <div className="m-3 rounded-2xl border border-sidebar-border bg-sidebar-accent/40 p-4">
         <div className="flex items-center gap-3">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full brand-gradient text-primary-foreground text-xs font-semibold">
-            {meta.initials}
+            {userMeta.initials}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-sidebar-foreground">{meta.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{meta.subtitle}</p>
+            <p className="truncate text-sm font-medium text-sidebar-foreground">{userMeta.name}</p>
+            <p className="truncate text-xs text-muted-foreground">{userMeta.subtitle}</p>
           </div>
         </div>
       </div>
@@ -99,10 +127,54 @@ function SidebarBody({ role, onNavigate }: { role: Role; onNavigate?: () => void
 export default function DashboardLayout({ role, children }: { role: Role; children?: ReactNode }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const meta = roleMeta[role];
+  const [user, setUser] = useState<DashboardUser | null>(null);
   const pathname = usePathname() ?? "";
   const items = navByRole[role];
   const current = items.find((i) => pathname === i.to) ?? items.find((i) => pathname.startsWith(i.to)) ?? items[0];
+  const meta = useMemo(() => {
+    const fallback = roleMeta[role];
+
+    if (!user) {
+      return fallback;
+    }
+
+    return {
+      label: fallback.label,
+      name: user.name,
+      subtitle: user.email,
+      initials: getInitials(user.name),
+    };
+  }, [role, user]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as SessionResponse;
+
+        if (!ignore && data.user) {
+          setUser(data.user);
+        }
+      } catch {
+        if (!ignore) {
+          setUser(null);
+        }
+      }
+    }
+
+    void loadSession();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   async function handleSignOut() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -114,7 +186,7 @@ export default function DashboardLayout({ role, children }: { role: Role; childr
     <div className="min-h-screen bg-secondary/30 flex">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar sticky top-0 h-screen">
-        <SidebarBody role={role} />
+        <SidebarBody role={role} userMeta={meta} />
       </aside>
 
       {/* Mobile sheet */}
@@ -122,7 +194,7 @@ export default function DashboardLayout({ role, children }: { role: Role; childr
         <>
           <div className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-sm lg:hidden" onClick={() => setMobileOpen(false)} />
           <aside className="fixed inset-y-0 left-0 z-50 w-72 bg-sidebar border-r border-sidebar-border lg:hidden animate-fade-in">
-            <SidebarBody role={role} onNavigate={() => setMobileOpen(false)} />
+            <SidebarBody role={role} userMeta={meta} onNavigate={() => setMobileOpen(false)} />
           </aside>
         </>
       )}
@@ -166,7 +238,10 @@ export default function DashboardLayout({ role, children }: { role: Role; childr
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>{meta.name}</DropdownMenuLabel>
+                  <DropdownMenuLabel>
+                    <span className="block truncate">{meta.name}</span>
+                    <span className="block truncate text-xs font-normal text-muted-foreground">{meta.subtitle}</span>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild><Link href={`/${role}/profile`}>Profile</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/">Switch role</Link></DropdownMenuItem>
