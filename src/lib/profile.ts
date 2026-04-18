@@ -3,6 +3,10 @@ export type ProfileUser = {
   name: string;
   email: string;
   role: "customer" | "partner" | "admin";
+  phone?: string | null;
+  address?: string | null;
+  business_type?: string | null;
+  businessType?: string | null;
   email_verified_at?: string | null;
 };
 

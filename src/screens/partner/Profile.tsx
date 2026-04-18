@@ -12,6 +12,9 @@ import { toast } from "sonner";
 export default function PartnerProfile() {
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [businessType, setBusinessType] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -26,6 +29,9 @@ export default function PartnerProfile() {
         const data = (await response.json()) as ProfileUser;
         setUser(data);
         setName(data.name);
+        setPhone(data.phone ?? "");
+        setAddress(data.address ?? "");
+        setBusinessType(data.business_type ?? data.businessType ?? "Rental partner");
       } catch (error) {
         toast.error("Could not load profile", {
           description: error instanceof Error ? error.message : "Please refresh the page.",
@@ -44,7 +50,12 @@ export default function PartnerProfile() {
       const response = await fetch("/api/auth/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({
+          name,
+          phone,
+          address,
+          business_type: businessType,
+        }),
       });
       const data = (await response.json()) as ProfileUser;
 
@@ -54,6 +65,9 @@ export default function PartnerProfile() {
 
       setUser(data);
       setName(data.name);
+      setPhone(data.phone ?? phone);
+      setAddress(data.address ?? address);
+      setBusinessType(data.business_type ?? data.businessType ?? businessType);
       toast.success("Business profile updated");
     } catch (error) {
       toast.error("Could not update profile", {
@@ -90,15 +104,31 @@ export default function PartnerProfile() {
             </div>
             <div>
               <Label>Phone</Label>
-              <Input className="mt-1.5" placeholder="+971 4 555 1234" />
+              <Input
+                className="mt-1.5"
+                type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="+971 4 555 1234"
+              />
             </div>
             <div>
               <Label>Business type</Label>
-              <Input className="mt-1.5" value="Rental partner" disabled />
+              <Input
+                className="mt-1.5"
+                value={businessType}
+                onChange={(event) => setBusinessType(event.target.value)}
+                placeholder="Rental partner"
+              />
             </div>
             <div className="sm:col-span-2">
               <Label>Address</Label>
-              <Input className="mt-1.5" placeholder="Sheikh Zayed Road, Dubai" />
+              <Input
+                className="mt-1.5"
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+                placeholder="Sheikh Zayed Road, Dubai"
+              />
             </div>
           </div>
           <Button className="rounded-full" disabled={isSaving || !name.trim()}>

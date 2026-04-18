@@ -44,18 +44,22 @@ function isValidPasswordByteLength(password: string) {
 async function registerAccount({
   name,
   email,
+  phone,
   password,
   role,
+  businessType,
 }: {
   name: string;
   email: string;
+  phone?: string;
   password: string;
   role: AccountRole;
+  businessType?: string;
 }) {
   const response = await fetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password, role }),
+    body: JSON.stringify({ name, email, phone, password, role, business_type: businessType }),
   });
   const data = (await response.json()) as RegisterResponse;
 
@@ -102,6 +106,7 @@ export default function Register() {
       const data = await registerAccount({
         name: String(formData.get("name") ?? ""),
         email: String(formData.get("email") ?? ""),
+        phone: String(formData.get("phone") ?? ""),
         password,
         role: "customer",
       });
@@ -155,8 +160,10 @@ export default function Register() {
       const data = await registerAccount({
         name: businessName || ownerName,
         email: String(formData.get("email") ?? ""),
+        phone: String(formData.get("phone") ?? ""),
         password,
         role: "partner",
+        businessType,
       });
       toast.success("Verification code sent", {
         description: "Enter the verification code sent to your email.",
