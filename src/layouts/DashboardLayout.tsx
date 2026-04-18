@@ -2,7 +2,7 @@
 
 import { ReactNode, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, CalendarDays, Bell, User, Car, BarChart3,
   ShieldCheck, Users, Settings, Search, ChevronDown, LogOut, Menu, X, Plus,
@@ -97,11 +97,18 @@ function SidebarBody({ role, onNavigate }: { role: Role; onNavigate?: () => void
 }
 
 export default function DashboardLayout({ role, children }: { role: Role; children?: ReactNode }) {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const meta = roleMeta[role];
   const pathname = usePathname() ?? "";
   const items = navByRole[role];
   const current = items.find((i) => pathname === i.to) ?? items.find((i) => pathname.startsWith(i.to)) ?? items[0];
+
+  async function handleSignOut() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <div className="min-h-screen bg-secondary/30 flex">
@@ -164,7 +171,9 @@ export default function DashboardLayout({ role, children }: { role: Role; childr
                   <DropdownMenuItem asChild><Link href={`/${role}/profile`}>Profile</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/">Switch role</Link></DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild><Link href="/login" className="text-destructive"><LogOut className="h-4 w-4 mr-2" />Sign out</Link></DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive" onSelect={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-2" />Sign out
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
