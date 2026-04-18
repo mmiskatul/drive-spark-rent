@@ -1,13 +1,158 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import DashboardLayout, { PageHeader } from "@/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cars } from "@/lib/mock-data";
-import { Plus, Search, Edit, Trash2, Star } from "lucide-react";
+import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+type ApiCar = {
+  id: string;
+  title: string;
+  brand: string;
+  model: string;
+  year: number;
+  category: string;
+  location: string;
+  price_per_day: number;
+  seats: number;
+  transmission: string;
+  fuel: string;
+  status: "draft" | "active" | "unavailable";
+};
+
+type CarsResponse = {
+  items: ApiCar[];
+};
+
+function getErrorMessage(data: unknown) {
+  if (data && typeof data === "object" && "detail" in data) {
+    const detail = (data as { detail?: unknown }).detail;
+    return typeof detail === "string" ? detail : "Request failed.";
+  }
+
+  return "Request failed.";
+}
 
 export default function PartnerCars() {
+  const [cars, setCars] = useState<ApiCar[]>([]);
+  const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [busyCarId, setBusyCarId] = useState<string | null>(null);
+
+  const filteredCars = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return cars;
+    }
+
+    return cars.filter((car) =>
+      [car.title, car.brand, car.model, car.category, car.location]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery),
+    );
+  }, [cars, query]);
+
+  async function loadCars() {
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/cars/mine", { cache: "no-store" });
+      const data = (await response.json()) as CarsResponse;
+
+      if (!response.ok) {
+        throw new Error(getErrorMessage(data));
+      }
+
+      setCars(data.items);
+    } catch (error) {
+      toast.error("Could not load cars", {
+        description: error instanceof Error ? error.message : "Please refresh the page.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadCars();
+  }, []);
+
+  async function handleDelete(car: ApiCar) {
+    if (!window.confirm(`Delete ${car.title}?`)) {
+      return;
+    }
+
+    setBusyCarId(car.id);
+
+    try {
+      const response = await fetch(`/api/cars/${car.id}`, { method: "DELETE" });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(getErrorMessage(data));
+      }
+
+      setCars((currentCars) => currentCars.filter((currentCar) => currentCar.id !== car.id));
+      toast.success("Car deleted");
+    } catch (error) {
+      toast.error("Could not delete car", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setBusyCarId(null);
+    }
+  }
+
+  async function handleQuickUpdate(car: ApiCar) {
+    const priceInput = window.prompt("Price per day", String(car.price_per_day));
+
+    if (!priceInput) {
+      return;
+    }
+
+    const price = Number(priceInput);
+
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error("Enter a valid price.");
+      return;
+    }
+
+    const nextStatus = car.status === "active" ? "unavailable" : "active";
+    setBusyCarId(car.id);
+
+    try {
+      const response = await fetch(`/api/cars/${car.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          price_per_day: price,
+          status: nextStatus,
+        }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(getErrorMessage(data));
+      }
+
+      setCars((currentCars) =>
+        currentCars.map((currentCar) => (currentCar.id === car.id ? data : currentCar)),
+      );
+      toast.success("Car updated");
+    } catch (error) {
+      toast.error("Could not update car", {
+        description: error instanceof Error ? error.message : "Please try again.",
+      });
+    } finally {
+      setBusyCarId(null);
+    }
+  }
+
   return (
     <DashboardLayout role="partner">
       <PageHeader
@@ -17,7 +162,12 @@ export default function PartnerCars() {
       />
       <div className="mb-4 relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search cars…" className="pl-9 rounded-full" />
+        <Input
+          placeholder="Search cars..."
+          className="pl-9 rounded-full"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
       </div>
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
@@ -26,38 +176,59 @@ export default function PartnerCars() {
               <tr>
                 <th className="text-left p-4 font-medium">Car</th>
                 <th className="text-left p-4 font-medium">Category</th>
+                <th className="text-left p-4 font-medium">Location</th>
                 <th className="text-left p-4 font-medium">Price/day</th>
                 <th className="text-left p-4 font-medium">Status</th>
-                <th className="text-left p-4 font-medium">Bookings</th>
-                <th className="text-left p-4 font-medium">Rating</th>
                 <th className="p-4"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {cars.map((c) => (
-                <tr key={c.id} className="hover:bg-secondary/30">
+              {isLoading && (
+                <tr>
+                  <td className="p-6 text-center text-muted-foreground" colSpan={6}>Loading cars...</td>
+                </tr>
+              )}
+              {!isLoading && filteredCars.length === 0 && (
+                <tr>
+                  <td className="p-6 text-center text-muted-foreground" colSpan={6}>No cars found.</td>
+                </tr>
+              )}
+              {filteredCars.map((car) => (
+                <tr key={car.id} className="hover:bg-secondary/30">
                   <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <img src={c.image} className="h-12 w-16 rounded-lg object-cover" alt="" />
-                      <div>
-                        <p className="font-semibold">{c.title}</p>
-                        <p className="text-xs text-muted-foreground">{c.brand} · {c.year}</p>
-                      </div>
+                    <div>
+                      <p className="font-semibold">{car.title}</p>
+                      <p className="text-xs text-muted-foreground">{car.brand} {car.model} · {car.year}</p>
                     </div>
                   </td>
-                  <td className="p-4 text-muted-foreground">{c.category}</td>
-                  <td className="p-4 font-semibold">${c.pricePerDay}</td>
+                  <td className="p-4 text-muted-foreground">{car.category}</td>
+                  <td className="p-4 text-muted-foreground">{car.location}</td>
+                  <td className="p-4 font-semibold">${car.price_per_day}</td>
                   <td className="p-4">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${c.available ? "bg-status-confirmed-bg text-status-confirmed" : "bg-status-rejected-bg text-status-rejected"}`}>
-                      {c.available ? "Active" : "Booked"}
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${car.status === "active" ? "bg-status-confirmed-bg text-status-confirmed" : "bg-status-rejected-bg text-status-rejected"}`}>
+                      {car.status === "active" ? "Active" : car.status === "draft" ? "Draft" : "Unavailable"}
                     </span>
                   </td>
-                  <td className="p-4 text-muted-foreground">{c.reviews}</td>
-                  <td className="p-4 flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-warning text-warning" /> {c.rating}</td>
                   <td className="p-4">
                     <div className="flex gap-1 justify-end">
-                      <Button size="icon" variant="ghost" className="h-8 w-8"><Edit className="h-3.5 w-3.5" /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        disabled={busyCarId === car.id}
+                        onClick={() => handleQuickUpdate(car)}
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive"
+                        disabled={busyCarId === car.id}
+                        onClick={() => handleDelete(car)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </td>
                 </tr>
