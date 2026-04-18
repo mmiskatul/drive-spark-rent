@@ -13,8 +13,6 @@ dist
 dist-ssr
 *.tsbuildinfo
 *.local
-.env
-.env.*
 !.env.example
 __pycache__/
 *.py[cod]
@@ -34,3 +32,7 @@ venv/
 *.njsproj
 *.sln
 *.sw?
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
+config.bat
