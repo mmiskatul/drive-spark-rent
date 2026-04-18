@@ -1,5 +1,5 @@
-import PartnerAddCar from "@/screens/partner/AddCar";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <PartnerAddCar />;
+  redirect("/partner/cars/new/basic-info");
 }

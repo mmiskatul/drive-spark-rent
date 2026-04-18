@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, SlidersHorizontal, LayoutGrid, List, Star, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CarCard } from "@/components/CarCard";
-import { cars } from "@/lib/mock-data";
+import { apiCarsToCars, type CarsResponse } from "@/lib/api-cars";
+import { cars as mockCars, type Car } from "@/lib/mock-data";
 
 const categories = ["SUV", "Sedan", "Coupe", "Hatchback", "Electric", "Pickup"];
 
@@ -68,20 +69,47 @@ function FilterPanel({ price, setPrice }: { price: number[]; setPrice: (v: numbe
 }
 
 export default function Cars() {
+  const [cars, setCars] = useState<Car[]>([]);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [price, setPrice] = useState([0, 600]);
   const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadCars() {
+      setIsLoading(true);
+
+      try {
+        const response = await fetch("/api/cars?limit=100", { cache: "no-store" });
+        const data = (await response.json()) as CarsResponse;
+
+        if (!response.ok) {
+          throw new Error("Could not load cars.");
+        }
+
+        setCars(apiCarsToCars(data));
+      } catch {
+        setCars(mockCars);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void loadCars();
+  }, []);
 
   const filtered = useMemo(() => cars.filter((c) =>
     c.pricePerDay >= price[0] && c.pricePerDay <= price[1] &&
     (query === "" || c.title.toLowerCase().includes(query.toLowerCase()) || c.location.toLowerCase().includes(query.toLowerCase()))
-  ), [price, query]);
+  ), [cars, price, query]);
 
   return (
     <div className="container py-10">
       <div className="mb-8">
         <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Browse cars</h1>
-        <p className="text-muted-foreground mt-2">{filtered.length} cars available across the UAE</p>
+        <p className="text-muted-foreground mt-2">
+          {isLoading ? "Loading cars..." : `${filtered.length} cars available across the UAE`}
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-3 mb-6">
@@ -126,7 +154,12 @@ export default function Cars() {
         </aside>
 
         <div>
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="rounded-2xl border border-dashed border-border bg-card p-16 text-center">
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              <p className="mt-5 text-sm text-muted-foreground">Loading cars from partners...</p>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border bg-card p-16 text-center">
               <div className="grid h-14 w-14 place-items-center rounded-full bg-secondary mx-auto"><Search className="h-6 w-6 text-muted-foreground" /></div>
               <h3 className="mt-5 font-display font-semibold text-lg">No cars found</h3>
