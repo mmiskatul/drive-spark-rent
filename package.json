@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "build:dev": "next build",
+    "dev": "node api.js && next dev",
+    "build": "node api.js && next build",
+    "build:dev": "node api.js && next build",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "lint": "eslint .",
