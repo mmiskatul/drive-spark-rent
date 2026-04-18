@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { copySetCookieHeaders, getBackendUrl } from "@/lib/backend-api";
 
 const roleRedirects = {
-  customer: "/customer",
-  partner: "/partner",
+  customer: "/",
+  partner: "/",
   admin: "/admin",
 };
 
