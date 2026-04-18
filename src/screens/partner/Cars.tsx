@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import DashboardLayout, { PageHeader } from "@/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { apiCarToCar, type ApiCar, type CarsResponse } from "@/lib/api-cars";
 import { Edit, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +17,44 @@ function getErrorMessage(data: unknown) {
   }
 
   return "Request failed.";
+}
+
+function CarsTableSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <tr key={index}>
+          <td className="p-4">
+            <div className="flex min-w-72 items-center gap-3">
+              <Skeleton className="h-16 w-24 rounded-xl" />
+              <div>
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="mt-2 h-3 w-28" />
+              </div>
+            </div>
+          </td>
+          <td className="p-4">
+            <Skeleton className="h-4 w-20" />
+          </td>
+          <td className="p-4">
+            <Skeleton className="h-4 w-28" />
+          </td>
+          <td className="p-4">
+            <Skeleton className="h-4 w-16" />
+          </td>
+          <td className="p-4">
+            <Skeleton className="h-7 w-24 rounded-full" />
+          </td>
+          <td className="p-4">
+            <div className="flex justify-end gap-1">
+              <Skeleton className="h-8 w-8 rounded-md" />
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          </td>
+        </tr>
+      ))}
+    </>
+  );
 }
 
 export default function PartnerCars() {
@@ -169,11 +208,7 @@ export default function PartnerCars() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {isLoading && (
-                <tr>
-                  <td className="p-6 text-center text-muted-foreground" colSpan={6}>Loading cars...</td>
-                </tr>
-              )}
+              {isLoading && <CarsTableSkeleton />}
               {!isLoading && filteredCars.length === 0 && (
                 <tr>
                   <td className="p-8 text-center" colSpan={6}>
