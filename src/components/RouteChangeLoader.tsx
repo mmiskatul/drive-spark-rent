@@ -89,7 +89,7 @@ export function RouteChangeLoader() {
 
   return (
     <div
-      className="fixed right-4 top-4 z-[100] grid h-10 w-10 place-items-center rounded-full border border-border bg-background/95 shadow-soft backdrop-blur"
+      className="fixed left-1/2 top-1/2 z-[100] grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-border bg-background/95 shadow-soft backdrop-blur"
       role="status"
       aria-label="Loading page"
     >
