@@ -5,6 +5,7 @@ import { type ReactNode, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { RouteChangeLoader } from "@/components/RouteChangeLoader";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -13,6 +14,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         {children}
+        <RouteChangeLoader />
         <Toaster />
         <Sonner />
       </TooltipProvider>
